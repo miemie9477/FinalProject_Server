@@ -1,0 +1,37 @@
+http://localhost:5000/GoodDetail/product/P01
+{"results": {"pId": "P01", "pName": "Hair Recipe髮的食譜奇異果無花果去油蓬鬆洗髮露", "brand": "Hair Recipe髮的食譜", "category": "洗髮", "price": 399.0, "review": 4.9, "clickTimes": 0}}
+
+http://localhost:5000/GoodDetail/priceNow/P01
+
+http://localhost:5000/GoodDetail/productReview/P01
+
+http://localhost:5000/GoodDetail/productReview/P01
+
+POST
+http://localhost:5000/GoodDetail/click/P01
+
+POST
+http://localhost:5000/GoodDetail/track/id
+{
+    "cId": "C01",
+    "pId": "P01"
+}
+
+{
+    "cId": "C01",
+    "pId": "P02"
+}
+
+POST
+http://localhost:5000/GoodDetail/track/insert
+{
+    "cId": "C01",
+    "pId": "P02"
+}
+
+POST
+http://localhost:5000/GoodDetail/track/delete
+{
+    "cId": "C01",
+    "pId": "P01"
+}

@@ -1,0 +1,8 @@
+#pip install -r requirements.txt
+Flask==2.0.1  # Flask 核心框架，用於建構 Web API
+Flask-SQLAlchemy==2.5.1  # Flask 與 SQLAlchemy ORM 整合，方便操作資料庫
+python-dotenv==0.19.0  # 讀取 `.env` 環境變數，讓敏感資訊不直接寫死在程式碼中
+PyJWT==2.10.1  # JSON Web Token (JWT) 驗證與加密，主要用於 API 的身份驗證
+pyodbc==4.0.32  # 使用 ODBC 方式連接 Microsoft SQL Server
+pymssql==2.2.3  # 另一種連接 MS SQL Server 的方式（基於 FreeTDS，可選）
+SQLAlchemy==1.4.23  # Python 的 ORM 框架，支援 SQL 操作與關聯模型管理
