@@ -1,15 +1,10 @@
 from flask import Response, Blueprint, jsonify, request
-from models.models import ClientFavorites, GoodReview, Product, PriceNow
-from sqlalchemy.exc import SQLAlchemyError
+from models.models import Client_Favorites, Good_Review, Product, Price_Now
+from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from dbconfig.dbconnect import db
 import json
 
 GoodDetail_bp = Blueprint("GoodDetail", __name__, url_prefix="/GoodDetail")
-
-'''
-目前版本只有簡單測輸入正確值
-學習寫測試中
-'''
 
 # /product/<string:pId>
 @GoodDetail_bp.route("/product/<string:pId>", methods=["GET"])
@@ -47,7 +42,7 @@ def get_price_now(pId):
         if not pId or not isinstance(pId, str):
             return jsonify({"error": "請求參數錯誤"}), 400
         
-        price_now_list = PriceNow.query.filter_by(pId=pId).all()
+        price_now_list = Price_Now.query.filter_by(pId=pId).all()
         if not price_now_list:
             return jsonify({"error": "未找到資源"}), 404
         
@@ -75,7 +70,7 @@ def get_product_review(pId):
         if not pId:
             return jsonify({"error": "請求參數錯誤"}), 400
 
-        get_review_list = GoodReview.query.filter_by(pId=pId).all()
+        get_review_list = Good_Review.query.filter_by(pId=pId).all()
 
         if not get_review_list:
             return jsonify({"error": "未找到資源"}), 404
@@ -103,112 +98,86 @@ def click(pId):
         if not pId:
             return jsonify({"error": "請求參數錯誤"}), 400
 
-        # 先把舊的clicktimes從Product撈出來
-        origin_click_times = Product.query.with_entities(Product.pId, Product.clickTimes).filter_by(pId=pId).first()
+        # 手動開 session，這樣才能明確控制
+        session = db.session()
 
-        if not origin_click_times:
-            return jsonify({"error": "未找到資源"}), 404
+        with session.begin():  # 開 transaction
+            updated_rows = session.query(Product).filter_by(pId=pId).update(
+                {Product.clickTimes: Product.clickTimes + 1},
+                synchronize_session=False
+            )
 
-        # 數值加1後 Update clicktimes 欄位
-        update_click_times = origin_click_times.clickTimes + 1
-        Product.query.filter_by(pId=pId).update({"clickTimes": update_click_times})
-        db.session.commit()
+            if updated_rows == 0:
+                session.rollback()
+                return jsonify({"error": "未找到資源"}), 404
 
-        new = Product.query.with_entities(Product.pId, Product.clickTimes).filter_by(pId=pId).first()
-        return jsonify({
-            "message": "點擊次數已更新",
-            "clickTimes": new.clickTimes
-        }), 200
-    
+        session.commit()
+
+        return jsonify({"message": "點擊次數已更新"}), 200
+
+    except OperationalError as oe:
+        # 連線超時或資料庫無法操作
+        if session.is_active:
+            session.rollback()
+        return jsonify({'error': f'資料庫連線失敗或逾時: {str(oe)}'}), 500
+
     except SQLAlchemyError as e:
-        # 資料庫操作過程中出錯，就回滾（rollback()）以避免半寫入的狀況
-        db.session.rollback()
-        return jsonify({str(e)}), 500
+        if session.is_active:
+            session.rollback()
+        return jsonify({'error': f'資料庫操作錯誤: {str(e)}'}), 500
+
+    except Exception as e:
+        if session.is_active:
+            session.rollback()
+        return jsonify({'error': f'伺服器內部錯誤: {str(e)}'}), 500
+
     finally:
-        db.session.remove()
+        session.close()
 
-@GoodDetail_bp.route("/track/id", methods=["POST"])
-def track_id():
+
+@GoodDetail_bp.route("/track", methods=["POST"])
+def toggle_track_status():
     try:
         data = request.get_json()
         cId = data.get('cId')
         pId = data.get('pId')
 
-        # 驗證參數是否齊全
         if not cId or not pId:
             return jsonify({'error': '請求參數錯誤'}), 400
 
-        # 查詢是否已關注
-        favorite = ClientFavorites.query.filter_by(cId=cId, pId=pId).first()
+        favorite = db.session.get(Client_Favorites, {'cId': cId, 'pId': pId})
 
-        # 有關注，status = 1
+        action_taken = False
+
         if favorite:
-            return jsonify({
-                'cId': cId,
-                'pId': pId,
-                'status': 1
-            }), 200
+            db.session.delete(favorite)
+            new_status = 0
+            message = "已取消追蹤"
+            action_taken = True
         else:
-            return jsonify({
-                'cId': cId,
-                'pId': pId,
-                'status': 0
-            }), 200
-        
+            product_exists = Product.query.filter_by(pId=pId).first()
+            if not product_exists:
+                return jsonify({'error': f'無法追蹤，商品 ID {pId} 不存在'}), 404
+            add_favorite = Client_Favorites(cId=cId, pId=pId)
+            db.session.add(add_favorite)
+            new_status = 1
+            message = "已加入追蹤"
+            action_taken = True
+
+        if action_taken:
+            db.session.commit()
+
+        return jsonify({
+            'message': message,
+            'cId': cId,
+            'pId': pId,
+            'status': new_status
+        }), 200
     except SQLAlchemyError as e:
-        return jsonify({str(e)}), 500
-
-'''
-下面這兩個以後可以考慮整合(用status管理，切換狀態)
-'''
-@GoodDetail_bp.route("/track/insert", methods=["POST"])
-def track_insert():
-    try:
-        data = request.get_json()
-        cId = data.get('cId')
-        pId = data.get('pId')
-
-        # 驗證參數是否齊全
-        if not cId or not pId:
-            return jsonify({'error': '請求參數錯誤'}), 400
-        
-        add_favorite = ClientFavorites(cId=cId, pId=pId)
-
-        # 加入 session 並提交
-        db.session.add(add_favorite)
-        db.session.commit()
-
-        
-        # 回傳成功訊息
-        
-        return jsonify({'message': 'success'}), 200
-        
-    except SQLAlchemyError as e:
+        print(f"!!! SQLAlchemy Error Details: {e}")
         db.session.rollback()
-        return jsonify({str(e)}), 500
-
-
-@GoodDetail_bp.route("/track/delete", methods=["POST"])
-def track_delete():
-    try:
-        data = request.get_json()
-
-        cId = data.get('cId')
-        pId = data.get('pId')
-
-        if not cId or not pId:
-            return jsonify({'message': '請求參數錯誤'}), 400
-
-        favorite = ClientFavorites.query.filter_by(cId=cId, pId=pId).first()
-
-        if not favorite:
-            return jsonify({'message': '找不到資源'}), 404
-
-        db.session.delete(db.session.merge(favorite))
-        db.session.commit()
-        
-        return jsonify({'message': 'success'}), 200
-
-    except SQLAlchemyError as e:
+        return jsonify({'error': f'資料庫操作錯誤: {str(e)}'}), 500
+    except Exception as e:
         db.session.rollback()
-        return jsonify({str(e)}), 500
+        print(f"追蹤狀態切換時發生未預期錯誤: {e}")
+        return jsonify({'error': '伺服器內部錯誤'}), 500

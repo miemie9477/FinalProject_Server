@@ -1,31 +1,17 @@
-from sqlalchemy import create_engine
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.engine import URL
 from flask_sqlalchemy import SQLAlchemy
-import urllib.parse  # MSSQL Windows 驗證方式（Trusted Connection）
+from sqlalchemy import create_engine
 
-# # 設定 Microsoft SQL Server 連線資訊
-# DB_USERNAME = "miemie"
-# DB_PASSWORD = ""
-# DB_SERVER = "MIEMIE\\SQLEXPRESS"
-# DB_NAME = "DB"
+# 設定 Microsoft SQL Server 連線資訊
+DB_USERNAME = "testuser"
+DB_PASSWORD = "password"
+DB_SERVER = "DESKTOP-8RCNUI2\SQLEXPRESS"
+DB_NAME = "DB"
+DB_DRIVER = "ODBC Driver 17 for SQL Server"
 
-# # 建立 SQLAlchemy 連線字串
-# DB_URI = f"mssql+pyodbc://{DB_USERNAME}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?driver=ODBC+Driver+17+for+SQL+Server&Encrypt=no&Trusted_Connection=yes&TrustServerCertificate=yes"
+# 建立 SQLAlchemy 連線字串
+# 正確指定 ODBC 驅動程式
+DB_URI = f"mssql+pyodbc://{DB_USERNAME}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?driver=ODBC+Driver+17+for+SQL+Server"
 
-
-params = urllib.parse.quote_plus(
-    "DRIVER={ODBC Driver 17 for SQL Server};"
-    "SERVER=MIEMIE\\SQLEXPRESS;"
-    "DATABASE=DB;"
-    "Trusted_Connection=yes;"
-    "Encrypt=no;"
-    "TrustServerCertificate=yes;"
-)
-
-DB_URI = "mssql+pyodbc:///?odbc_connect=" + params
-
+# 初始化 SQLAlchemy
 db = SQLAlchemy()
-engine = create_engine(DB_URI)
-
-
+engine = create_engine(DB_URI, echo=True)  # echo=True 顯示執行的 SQL 查詢，方便除錯
