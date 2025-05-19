@@ -4,12 +4,26 @@ from routes.RegisterPage import register_bp
 from routes.Frame import frame_bp
 from routes.HomePage import home_bp
 from routes.GoodPage import good_bp
-from routes.GoodDetail import GoodDetail_bp
-from dbconfig.dbconnect import db, DB_URI 
+from routes.GoodDetail import goodDetail_bp
+from routes.ClientPage import clientPage_bp
+from dbconfig.dbconnect_local import DB_URI, db
 import os
 
+
 # 創建 Flask 應用實例
+# app = Flask(__name__)
+from flasgger import Swagger
 app = Flask(__name__)
+app.config['SWAGGER'] = {
+    "title": "My API",
+    "description": "My API",
+    "version": "1.0.2",
+    "termsOfService": "",
+    "hide_top_bar": True
+}
+# CORS(app)
+swagger = Swagger(app)
+
 
 # 設定應用密鑰（用於會話、JWT等）
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_key_for_testing')
@@ -27,7 +41,8 @@ app.register_blueprint(register_bp)
 app.register_blueprint(frame_bp)
 app.register_blueprint(home_bp)
 app.register_blueprint(good_bp)
-app.register_blueprint(GoodDetail_bp)
+app.register_blueprint(goodDetail_bp)
+app.register_blueprint(clientPage_bp)
 # 定義根路由 - 用來檢查 API 服務是否正常運行
 @app.route("/")
 def home():

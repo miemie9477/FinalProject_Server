@@ -1,5 +1,13 @@
+# 5/19 開發日誌 by mie
+* *GoodDetail.py*
+    * 修改bp名稱(main也有一起改)
+    * 把 */track/id* 加回來
+* *clientPage*
+    * 完成API
+
+
 # 專案規格
-# Flask 後端專案
+## Flask 後端專案
 
 1. 命名規則以 "TagPath.py" ，記得分大小寫 (FrameSearch.py)
 

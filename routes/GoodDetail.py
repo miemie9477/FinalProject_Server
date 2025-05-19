@@ -4,10 +4,10 @@ from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from dbconfig.dbconnect import db
 import json
 
-GoodDetail_bp = Blueprint("GoodDetail", __name__, url_prefix="/GoodDetail")
+goodDetail_bp = Blueprint("GoodDetail", __name__, url_prefix="/goodDetail")
 
 # /product/<string:pId>
-@GoodDetail_bp.route("/product/<string:pId>", methods=["GET"])
+@goodDetail_bp.route("/product/<string:pId>", methods=["GET"])
 def get_product_detail(pId):
     try:
         if not pId or not isinstance(pId, str):
@@ -34,9 +34,12 @@ def get_product_detail(pId):
 
     except SQLAlchemyError as e:
         return jsonify({"error": str(e)}), 500
-
+    except Exception as e:
+        print(f"發生未預期錯誤: {e}")
+        return jsonify({'error': '伺服器內部錯誤'}), 500
+    
 # /priceNow/<string:pId>
-@GoodDetail_bp.route("/priceNow/<string:pId>", methods=["GET"])
+@goodDetail_bp.route("/priceNow/<string:pId>", methods=["GET"])
 def get_price_now(pId):
     try:
         if not pId or not isinstance(pId, str):
@@ -62,12 +65,15 @@ def get_price_now(pId):
 
     except SQLAlchemyError as e:
         return jsonify({"error": str(e)}), 500
-
+    except Exception as e:
+        print(f"發生未預期錯誤: {e}")
+        return jsonify({'error': '伺服器內部錯誤'}), 500
+    
 # /productReview/<string:pId>
-@GoodDetail_bp.route("/productReview/<string:pId>", methods=["GET"])
+@goodDetail_bp.route("/productReview/<string:pId>", methods=["GET"])
 def get_product_review(pId):
     try:
-        if not pId:
+        if not pId or isinstance(pId, str):
             return jsonify({"error": "請求參數錯誤"}), 400
 
         get_review_list = Good_Review.query.filter_by(pId=pId).all()
@@ -90,12 +96,15 @@ def get_product_review(pId):
 
     except SQLAlchemyError as e:
         return jsonify({str(e)}), 500
-
+    except Exception as e:
+        print(f"發生未預期錯誤: {e}")
+        return jsonify({'error': '伺服器內部錯誤'}), 500
+    
 # /click/<string:pId>
-@GoodDetail_bp.route("/click/<string:pId>", methods=["POST"])
+@goodDetail_bp.route("/click/<string:pId>", methods=["POST"])
 def click(pId):
     try:
-        if not pId:
+        if not pId or isinstance(pId, str):
             return jsonify({"error": "請求參數錯誤"}), 400
 
         # 手動開 session，這樣才能明確控制
@@ -134,15 +143,48 @@ def click(pId):
     finally:
         session.close()
 
+@goodDetail_bp.route("/track/id", methods=["POST"])
+def track_id():
+    try:
+        data = request.get_json()
+        cId = data.get('cId')
+        pId = data.get('pId')
 
-@GoodDetail_bp.route("/track", methods=["POST"])
+        # 驗證參數是否齊全
+        if not cId or not pId:
+            return jsonify({'error': '請求參數錯誤'}), 400
+
+        # 查詢是否已關注
+        favorite = Client_Favorites.query.filter_by(cId=cId, pId=pId).first()
+
+        # 有關注，status = 1
+        if favorite:
+            return jsonify({
+                'cId': cId,
+                'pId': pId,
+                'status': 1
+            }), 200
+        else:
+            return jsonify({
+                'cId': cId,
+                'pId': pId,
+                'status': 0
+            }), 200
+        
+    except SQLAlchemyError as e:
+        return jsonify({str(e)}), 500
+    except Exception as e:
+        print(f"發生未預期錯誤: {e}")
+        return jsonify({'error': '伺服器內部錯誤'}), 500
+    
+@goodDetail_bp.route("/track", methods=["POST"])
 def toggle_track_status():
     try:
         data = request.get_json()
         cId = data.get('cId')
         pId = data.get('pId')
 
-        if not cId or not pId:
+        if not cId or not pId or isinstance(pId, str) or isinstance(cId, str):
             return jsonify({'error': '請求參數錯誤'}), 400
 
         favorite = db.session.get(Client_Favorites, {'cId': cId, 'pId': pId})

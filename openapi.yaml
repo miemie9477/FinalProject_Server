@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 美妝比價平台 API
   description: 這是美妝比價平台的 API 文件
-  version: 1.4.0
+  version: 1.5.0
 servers:
   - url: http://localhost:5000/
 tags:
@@ -437,7 +437,7 @@ paths:
                     type: string
                     example: "未找到該會員的關注紀錄"
 
-  /track:
+  /track/{cId}:
     get:
       tags:
         - ClientPage
@@ -445,6 +445,14 @@ paths:
       description: |
         - 先檢查是否登入，未登入則提示會員登入
         - 查詢後，根據pId outer join product資料表取得商品目前價格與商品名稱...等資料
+      parameters:
+      - name: cId
+        in: path
+        required: true
+        description: 會員編號
+        schema:
+            type: string
+            example: "a0000001"
       responses:
         "200":
           description: "回傳查詢關注清單結果"
@@ -1196,9 +1204,6 @@ components:
                 maxLength: 200
                 description: "通路購買連結"
                 example: "https://www.poya.com.tw/product/a0000001"
-        
-
-
       
     GoodReview:
       type: object
