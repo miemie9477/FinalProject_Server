@@ -19,7 +19,7 @@ def get_product_detail(pId):
         if not product:
             return jsonify({"error": "未找到資源"}), 404
         
-        result = {
+        results = {
             "pId": product.pId,
             "pName": product.pName,
             "brand": product.brand,
@@ -30,7 +30,7 @@ def get_product_detail(pId):
         }
 
         # ensure_ascii=False：讓中文顯示正常
-        return Response(json.dumps({"results": result}, ensure_ascii=False), mimetype='application/json')
+        return Response(json.dumps({"results": results}, ensure_ascii=False), mimetype='application/json')
 
     except SQLAlchemyError as e:
         return jsonify({"error": str(e)}), 500
@@ -50,7 +50,7 @@ def get_price_now(pId):
             return jsonify({"error": "未找到資源"}), 404
         
         # datetime 類型，不能直接丟進 json.dumps()
-        result = [
+        results = [
                     {
                         "pId": item.pId,
                         "store": item.store,
@@ -61,7 +61,7 @@ def get_price_now(pId):
                     }for item in price_now_list
                 ]
         
-        return Response(json.dumps({"results": result}, ensure_ascii=False), mimetype='application/json')
+        return Response(json.dumps({"results": results}, ensure_ascii=False), mimetype='application/json')
 
     except SQLAlchemyError as e:
         return jsonify({"error": str(e)}), 500
@@ -73,7 +73,7 @@ def get_price_now(pId):
 @goodDetail_bp.route("/productReview/<string:pId>", methods=["GET"])
 def get_product_review(pId):
     try:
-        if not pId or isinstance(pId, str):
+        if not pId or not isinstance(pId, str):
             return jsonify({"error": "請求參數錯誤"}), 400
 
         get_review_list = Good_Review.query.filter_by(pId=pId).all()
@@ -82,7 +82,7 @@ def get_product_review(pId):
             return jsonify({"error": "未找到資源"}), 404
         
         # The date needs to be converted into date format.
-        result = [
+        results = [
                     {
                         "pId": item.pId,
                         "userName": item.userName,
@@ -92,7 +92,7 @@ def get_product_review(pId):
                     }
                     for item in get_review_list
                 ]
-        return Response(json.dumps({"results": result}, ensure_ascii=False), mimetype='application/json')
+        return Response(json.dumps({"results": results}, ensure_ascii=False), mimetype='application/json')
 
     except SQLAlchemyError as e:
         return jsonify({str(e)}), 500
@@ -103,12 +103,11 @@ def get_product_review(pId):
 # /click/<string:pId>
 @goodDetail_bp.route("/click/<string:pId>", methods=["POST"])
 def click(pId):
-    try:
-        if not pId or isinstance(pId, str):
-            return jsonify({"error": "請求參數錯誤"}), 400
+    session = db.session()  # 先定義，讓 finally 可以 close
 
-        # 手動開 session，這樣才能明確控制
-        session = db.session()
+    try:
+        if not pId or not isinstance(pId, str): 
+            return jsonify({"error": "請求參數錯誤"}), 400
 
         with session.begin():  # 開 transaction
             updated_rows = session.query(Product).filter_by(pId=pId).update(
@@ -120,12 +119,17 @@ def click(pId):
                 session.rollback()
                 return jsonify({"error": "未找到資源"}), 404
 
+            # 查詢更新後的 clickTimes
+            new_click_times = session.query(Product.clickTimes).filter_by(pId=pId).scalar()
+
         session.commit()
 
-        return jsonify({"message": "點擊次數已更新"}), 200
+        return jsonify({
+            "message": "點擊次數已更新",
+            "clickTimes": new_click_times
+        }), 200
 
     except OperationalError as oe:
-        # 連線超時或資料庫無法操作
         if session.is_active:
             session.rollback()
         return jsonify({'error': f'資料庫連線失敗或逾時: {str(oe)}'}), 500
@@ -146,6 +150,7 @@ def click(pId):
 @goodDetail_bp.route("/track/id", methods=["POST"])
 def track_id():
     try:
+        
         data = request.get_json()
         cId = data.get('cId')
         pId = data.get('pId')
@@ -183,8 +188,8 @@ def toggle_track_status():
         data = request.get_json()
         cId = data.get('cId')
         pId = data.get('pId')
-
-        if not cId or not pId or isinstance(pId, str) or isinstance(cId, str):
+        print(cId + " " + pId)
+        if not cId or not pId or not isinstance(pId, str) or not isinstance(cId, str):
             return jsonify({'error': '請求參數錯誤'}), 400
 
         favorite = db.session.get(Client_Favorites, {'cId': cId, 'pId': pId})

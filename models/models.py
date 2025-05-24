@@ -1,8 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy import Unicode, Numeric, Integer, DateTime, Float
-
-db = SQLAlchemy()
+from dbconfig.dbconnect_local import db
+# db = SQLAlchemy()
 
 class Product(db.Model):
     __table_args__ = {'schema': 'dbo'} # 如果需要指定 schema

@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 美妝比價平台 API
   description: 這是美妝比價平台的 API 文件
-  version: 1.5.0
+  version: 1.6.0
 servers:
   - url: http://localhost:5000/
 tags:
@@ -24,7 +24,7 @@ tags:
     description: 後臺管理頁面(暫無內容)
 
 paths:
-  /search:
+  /frame/search:
     post:
       tags:
         - Frame
@@ -48,14 +48,11 @@ paths:
           description: "Invalid request parameter"
         "404":
           description: "find no result"
-
-  /product:
+  /homePage/product:
     get:
       tags:
         - HomePage
-        - GoodPage
       summary: 顯示 所有/特定類別 商品(order by clickTimes)
-      operationId: getFamousGood
       parameters:
       - name: category
         in: query
@@ -75,7 +72,31 @@ paths:
           description: "Invalid request parameter"
         "404":
           description: "find no result"
-  /login:
+  /goodPage/product:
+    get:
+      tags:
+        - GoodPage
+      summary: 顯示 所有/特定類別 商品(order by clickTimes)
+      parameters:
+      - name: category
+        in: query
+        required: false
+        description: (從Frame傳參數)商品品項類別（若不提供，則回傳所有商品）
+        schema:
+          type: string
+          example: "臉部保養"
+      responses:
+        "200":
+          description: "success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        "400":
+          description: "Invalid request parameter"
+        "404":
+          description: "find no result"
+  /LoginPage/login:
     post:
       tags:
         - LoginPage
@@ -86,7 +107,7 @@ paths:
         required: true
         content:
           application/json:
-            schema:
+            schema: 
               $ref: '#/components/schemas/LoginRequest'
       responses:
         "200":
@@ -95,7 +116,7 @@ paths:
           description: "Invalid request parameter"
         "404":
           description: "find no result"
-  /register:
+  /registerPage/register:
     post:
       tags:
         - RegisterPage
@@ -135,7 +156,7 @@ paths:
         "404":
           description: "problem"
   
-  /product/{pId} :
+  /goodDetail/product/{pId} :
     get:
       tags:
         - GoodDetail
@@ -161,7 +182,7 @@ paths:
         "404":
           description: "find no result"
    
-  /priceNow/{pId}:
+  /goodDetail/priceNow/{pId}:
    get:
      tags:
       - GoodDetail
@@ -186,7 +207,7 @@ paths:
               example1:
                 summary: 商品 a0000001 各通路價格資訊
                 value:
-                  prices:
+                  results:
                     - pId: "a0000001"
                       store: "poya"
                       updateTime: "2025-03-03T19:00:00Z"
@@ -210,7 +231,7 @@ paths:
       "404":
         description: "find no result"
   
-  /productReview/{pId}:
+  /goodDetail/productReview/{pId}:
     get:
       tags:
         - GoodDetail
@@ -238,7 +259,7 @@ paths:
         "404":
           description: "找不到該商品的評價"
           
-  /click/{pId}:
+  /goodDetail/click/{pId}:
     post:
       tags:
         - GoodDetail
@@ -288,7 +309,7 @@ paths:
                     type: string
                     example: "無效的商品編號"
 
-  /track/id:
+  /goodDetail/track/id:
     post:
       tags:
         - GoodDetail
@@ -338,14 +359,95 @@ paths:
         "400":
           description: "請求錯誤"
 
-  /track/insert:
+  /goodDetail/track:
     post:
       tags:
         - GoodDetail
-      summary: 加入關注商品
+      summary: 加入或取消關注商品
+      description: |
+        - 會員需登入（前端需提供有效的 `cId`）
+        - 若該會員 (`cId`) 尚未關注該商品 (`pId`)，則將其加入 `Client_Favorites`
+        - 若已關注，則從 `Client_Favorites` 中刪除該紀錄，表示取消關注
+        - 當 `pId` 對應商品不存在時，回傳錯誤
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cId
+                - pId
+              properties:
+                cId:
+                  type: string
+                  maxLength: 8
+                  example: "C1234567"
+                pId:
+                  type: string
+                  maxLength: 8
+                  example: "P0000001"
+      responses:
+        "200":
+          description: 已成功加入或取消關注
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "已加入追蹤"
+                  cId:
+                    type: string
+                    example: "C1234567"
+                  pId:
+                    type: string
+                    example: "P0000001"
+                  status:
+                    type: integer
+                    enum: [0, 1]
+                    description: 0 表示已取消追蹤，1 表示已加入追蹤
+        "400":
+          description: 請求參數錯誤
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "請求參數錯誤"
+        "404":
+          description: 商品不存在
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "無法追蹤，商品 ID P0000001 不存在"
+        "500":
+          description: 資料庫錯誤或伺服器內部錯誤
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "伺服器內部錯誤"
+                    
+
+  /clientPage/track:
+    post:
+      tags:
+        - ClientPage
+      summary: 加入/取消關注商品
       description: |
         - 會員需登入，若未登入則回傳錯誤
-        - 若該會員 (`cId`) 尚未關注該商品 (`pId`)，則將其加入 `Client_favorites`
+        - 若該會員 (`cId`) 尚未關注該商品 (`pId`)，則將其加入 `Client_favorites`，相反則取消關注
       requestBody:
         content:
           application/json:
@@ -362,7 +464,7 @@ paths:
                   example: "P0000001"
       responses:
         "200":
-          description: "成功加入關注"
+          description: "已取消追蹤/已加入追蹤"
           content:
             application/json:
               schema:
@@ -381,17 +483,16 @@ paths:
                   error:
                     type: string
                     example: "請先登入會員或已關注該商品"
-
-  /track/delete:
+  /clientPage/trackList:
     post:
       tags:
-        - GoodDetail
         - ClientPage
-      summary: 取消關注商品
+      summary: client所有關注商品
       description: |
-        - 會員需登入，若未登入則回傳錯誤
-        - 刪除會員 (`cId`) 針對商品 (`pId`) 的關注紀錄
+        - 先檢查是否登入，未登入則提示會員登入
+        - 查詢後，根據 pId outer join product 資料表取得商品目前價格與商品名稱等資料
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -401,100 +502,52 @@ paths:
                   type: string
                   maxLength: 8
                   example: "C1234567"
-                pId:
-                  type: string
-                  maxLength: 8
-                  example: "P0000001"
-      responses:
-        "200":
-          description: "成功取消關注"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "success"
-        "400":
-          description: "請求錯誤 (未登入或查無關注紀錄)"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "請先登入會員或未關注該商品"
-        "404":
-          description: "查無關注紀錄"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "未找到該會員的關注紀錄"
-
-  /track/{cId}:
-    get:
-      tags:
-        - ClientPage
-      summary: client所有關注商品
-      description: |
-        - 先檢查是否登入，未登入則提示會員登入
-        - 查詢後，根據pId outer join product資料表取得商品目前價格與商品名稱...等資料
-      parameters:
-      - name: cId
-        in: path
-        required: true
-        description: 會員編號
-        schema:
-            type: string
-            example: "a0000001"
+              required:
+                - cId
       responses:
         "200":
           description: "回傳查詢關注清單結果"
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  cId:
-                    type: string
-                    maxLength: 8
-                    description: "會員編號"
-                    example: "C1234567"
-                  pId:
-                    type: string
-                    maxLength: 8
-                    example: "a0000001"
-                  pName:
-                    type: string
-                    maxLength: 50
-                    example: "霓淨思超爆水面膜5片-潤澤保濕"
-                  brand:
-                    type: string
-                    maxLength: 30
-                    example: "霓淨思"
-                  category:
-                    type: string
-                    maxLength: 20
-                    example: "臉部保養"
-                  price:
-                    type: number
-                    example: 99.0
-                  clickTimes:
-                    type: integer
-                    example: 3
-                  review:
-                    type: number
-                    example: 4.5
+                type: array
+                items:
+                  type: object
+                  properties:
+                    cId:
+                      type: string
+                      maxLength: 8
+                      example: "C1234567"
+                    pId:
+                      type: string
+                      maxLength: 8
+                      example: "a0000001"
+                    pName:
+                      type: string
+                      maxLength: 50
+                      example: "霓淨思超爆水面膜5片-潤澤保濕"
+                    brand:
+                      type: string
+                      maxLength: 30
+                      example: "霓淨思"
+                    category:
+                      type: string
+                      maxLength: 20
+                      example: "臉部保養"
+                    price:
+                      type: number
+                      example: 99.0
+                    clickTimes:
+                      type: integer
+                      example: 3
+                    review:
+                      type: number
+                      example: 4.5
         "400":
           description: "請求錯誤"
+  
 
-  /client:
+  /clientPage/client:
     post:
       tags:
         - ClientPage
@@ -525,13 +578,13 @@ paths:
         "404":
           description: "找不到會員"
   
-  /client/update:
+  /clientPage/data/update:
     post:
       tags:
         - ClientPage
       summary: 修改會員資料 (email, phone, sex)
       description: |
-        - 需登入，`account` + `birthday` + `sex` 不可修改
+        - 需登入，`account` + `birthday` 不可修改
         - 用textfield方式呈現，default value 為原本會員資料
           - 密碼不需要放default value
         - textfeild value不可為空值
@@ -539,7 +592,6 @@ paths:
           - 所有欄位皆為required
             - cName:  1<=長度<=30
             - account:需含大小寫、符號、8<=長度<=20
-            - password: 需含大小寫、符號、8<=長度<=20
             - email: >=8,<=20
             - phone: 長度 == 10
             - birthday: 日期<=現在日期
@@ -547,35 +599,61 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                cId:
-                  type: string
-                  maxLength: 8
-                  description: "會員 ID"
-                  example: "C1234567"
-                email:
-                  type: string
-                  maxLength: 64
-                  description: "電子郵件，需檢查是否重複"
-                  example: "newemail@example.com"
-                phone:
-                  type: string
-                  maxLength: 10
-                  description: "手機號碼，需檢查是否重複"
-                  example: "0987654321"
-                sex:
-                  type: string
-                  maxLength: 14
-                  description: "性別"
-                  example: "女"
-              required:
-                - cId
-                - email
-                - phone
-                - sex
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cId:
+                    type: string
+                    minLength: 8
+                    maxLength: 8
+                    pattern: "^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+={}:;,.<>?/~]).{8}$"  # 包含大小寫字母、數字和符號
+                    description: 會員編號 (PK)，英文字+7位數字
+                    example: "a0000004"
+                  cName:
+                    type: string
+                    maxLength: 30
+                    pattern: "^(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+={}:;,.<>?/~]).{1,30}$"  # 包含大小寫字母和符號
+                    description: 會員名稱
+                    example: "小明"
+                  account:
+                    type: string
+                    minLength: 8
+                    maxLength: 20
+                    description: 帳號，長度 >= 8 且 <= 20
+                    example: "Root_123456"
+                  email:
+                    type: string
+                    minLength: 11
+                    maxLength: 64
+                    format: email
+                    description: 電子信箱，長度 > 10 且 < 64，符合 email 格式
+                  phone:
+                    type: string
+                    minLength: 10
+                    maxLength: 10
+                    pattern: "^[0-9]{10}$"  # 長度 == 10 且只包含數字
+                    description: 電話，長度 == 10
+                    example: "0900000000"
+                  sex:
+                    type: string
+                    maxLength: 14
+                    description: 性別
+                    example: "f"
+                  birthday:
+                    type: string
+                    format: date-time
+                    description: 生日，日期 <= 現在日期
+                    example: "2000-01-01T00:00:00Z"
+                required:
+                  - cId
+                  - cName
+                  - account
+                  - email
+                  - phone
+                  - sex
+                  - birthday
+                additionalProperties: false
       responses:
         "200":
           description: "修改成功"
@@ -583,6 +661,36 @@ paths:
           description: "請求參數錯誤或更新失敗"
         "401":
           description: "未登入或權限不足"
+          
+  /clientPage/password/update:
+    post:
+      tags:
+        - ClientPage
+      summary: 修改會員資料 (email, phone, sex)
+      description: |
+        - 需含大小寫、符號、8<=長度<=20
+        - 密碼儲存前必須使用雜湊加密（例如 bcrypt 或 PBKDF2）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                  minLength: 8
+                  maxLength: 20
+                  description: 密碼，長度 >= 8 且 <= 20
+                  example: "Root_123456789"
+      responses:
+        "200":
+          description: "會員資料更新成功"
+        "400":
+          description: "請求參數錯誤或更新失敗"
+        "401":
+          description: "未登入或權限不足"
+
     
   /:
     post:
@@ -1050,6 +1158,7 @@ components:
           minLength: 8
           maxLength: 20
           example: "Root_123456"
+          
     RegisterInfo:
       type: object
       properties:
@@ -1069,7 +1178,7 @@ components:
           type: string
           minLength: 8
           maxLength: 20
-          description: 密碼，長度 >= 8 且 <= 20
+          description: 需含大小寫、符號，長度 >= 8 且 <= 20
           example: "Root_123456789"
         email:
           type: string
@@ -1131,7 +1240,7 @@ components:
           type: string
           minLength: 8
           maxLength: 20
-          description: 密碼，長度 >= 8 且 <= 20
+          description: 需含大小寫、符號，長度 >= 8 且 <= 20
           example: "Root_123456789"
         email:
           type: string
@@ -1208,7 +1317,7 @@ components:
     GoodReview:
       type: object
       properties:
-        result:
+        results:
           type: array
           items:
             type: object

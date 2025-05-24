@@ -8,21 +8,13 @@ from routes.GoodDetail import goodDetail_bp
 from routes.ClientPage import clientPage_bp
 from dbconfig.dbconnect_local import DB_URI, db
 import os
-
+from flask_cors import CORS
 
 # 創建 Flask 應用實例
 # app = Flask(__name__)
-from flasgger import Swagger
 app = Flask(__name__)
-app.config['SWAGGER'] = {
-    "title": "My API",
-    "description": "My API",
-    "version": "1.0.2",
-    "termsOfService": "",
-    "hide_top_bar": True
-}
-# CORS(app)
-swagger = Swagger(app)
+CORS(app)
+
 
 
 # 設定應用密鑰（用於會話、JWT等）
