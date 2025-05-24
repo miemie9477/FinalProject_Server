@@ -1,0 +1,186 @@
+http://localhost:5000/clientPage
+
+http://localhost:5000/clientPage/track
+{
+    "methods": "POST",
+    "requestBody":{
+        "cId": "C01",
+        "pId": "P01"
+    }
+    "response":{
+        {
+            'status': 200,
+            'message': 已加入追蹤,
+            'cId': "C01",
+            'pId': "P01",
+            'status': 1
+        }
+    }
+}
+{
+    "methods": "POST",
+    "requestBody":{
+        "cId": "C01",
+        "pId": "P02"
+    }
+    "response":{
+        {
+            'message': 已取消追蹤,
+            'cId': "C01",
+            'pId': "P02",
+            'status': 0
+        }
+    }
+    'status': 200,
+}
+
+http://localhost:5000/clientPage/trackList
+{
+    "methods": "POST",
+    "requestBody":{
+        "cId": "C01"
+    }
+    "response":{
+        "results:[
+            {
+                "cId": "C01",
+                "pId": "P01"
+            },
+            {
+                "cId": "C01",
+                "pId": "P02"
+            }
+        ]
+    }
+    'status': 200,
+}
+
+http://localhost:5000/clientPage/client
+{
+    "methods": "POST",
+    "requestBody":{
+        "cId": "C01"
+    }
+    "response":{
+        "results:{
+            "cId": "C01",
+            "cName": "test01",
+            "account": "Test01",
+            "email": "test01@mail.com",
+            "phone": "0912345678",
+            "sex": "男",
+            "birthday": "1905-06-20 00:00:00.000"
+        }
+    }
+    'status': 200,
+}
+
+http://localhost:5000/clientPage/data/update
+{
+    "methods": "POST",
+    "requestBody":{
+        "cId": "C01",
+        "cName": "test",
+        "email": "test@mail.com",
+        "phone": "0900000000",
+        "sex": "女"
+    }
+    "response":{
+        "message": "會員資料更新成功"
+    }
+    'status': 200,
+}
+{
+    "methods": "POST",
+    "requestBody":{
+        "cId": "C01",
+        "cName": "test01",
+        "email": "test02@mail.com",
+        "phone": "0900000000",
+        "sex": "男"
+    }
+    "response":{
+        "message": "Email 已存在"
+    }
+    'status': 400,
+}
+{
+    "methods": "POST",
+    "requestBody":{
+        "cId": "C01",
+        "cName": "test01",
+        "email": "test01@mail.com",
+        "phone": "0932165498",
+        "sex": "男"
+    }
+    "response":{
+        "message": "電話已存在"
+    }
+    'status': 400,
+}
+{
+    "methods": "POST",
+    "requestBody":{
+        "cId": "C01",
+        "cName": "",
+        "email": "test01@mail.com",
+        "phone": "0900000000",
+        "sex": "男"
+    }
+    "response":{
+        "message": "姓名長度必須介於 1 到 30 個字元之間"
+    }
+    'status': 400,
+}
+{
+    "methods": "POST",
+    "requestBody":{
+        "cId": "C01",
+        "email": "test01@mail.com",
+        "phone": "0900000000",
+        "sex": "男"
+    }
+    "response":{
+        "message": "缺少必要欄位: cName"
+    }
+    'status': 400,
+}
+{
+    "methods": "POST",
+    "requestBody":{
+        "cId": "C01",
+        "cName": "test01",
+        "email": "test01",
+        "phone": "0900000000",
+        "sex": "男"
+    }
+    "response":{
+        "message": "電子郵件格式或長度錯誤 (需 8-64 字元)"
+    }
+    'status': 400,
+}
+
+http://localhost:5000/clientPage/password/update
+{
+    "methods": "POST",
+    "requestBody":{
+        "cId": "C01",
+        "password": "testtest"
+    },
+    "response":{
+        "message": "密碼格式錯誤 (需 8-20 字元，包含大小寫字母及符號)"
+    }
+    'status': 400,
+}
+{
+    "methods": "POST",
+    "requestBody":{
+        "cId": "C01",
+        "password": "For_Test_01"
+    },
+    "response":{
+        "message": "successfully modify password",
+        "cId": "C01"
+    }
+    'status': 200,
+}
