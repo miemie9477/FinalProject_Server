@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy import Unicode, Numeric, Integer, DateTime, Float
-from dbconfig.dbconnect_local import db
+from dbconfig.dbconnect_backup import db
 # db = SQLAlchemy()
 
 class Product(db.Model):
