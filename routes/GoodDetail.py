@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from dbconfig.dbconnect import db
 import json
 
-goodDetail_bp = Blueprint("GoodDetail", __name__, url_prefix="/goodDetail")
+goodDetail_bp = Blueprint("GoodDetail", __name__, url_prefix="/gooddetail")
 
 # /product/<string:pId>
 @goodDetail_bp.route("/product/<string:pId>", methods=["GET"])
