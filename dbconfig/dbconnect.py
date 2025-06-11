@@ -1,17 +1,26 @@
+import os
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
 
-# 設定 Microsoft SQL Server 連線資訊
-DB_USERNAME = "testuser"
-DB_PASSWORD = "password"
-DB_SERVER = "DESKTOP-8RCNUI2\SQLEXPRESS"
-DB_NAME = "DB"
-DB_DRIVER = "ODBC Driver 17 for SQL Server"
+DB_USERNAME = os.getenv("DB_USERNAME", "sa")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "Root_123456")
+DB_SERVER = os.getenv("DB_SERVER", "localhost")  # SQL Server instance name
+DB_PORT    = os.getenv("DB_PORT", "1433")
+DB_NAME    = os.getenv("DB_NAME", "DB")  # Database name
+DB_DRIVER  = os.getenv("DB_DRIVER", "ODBC Driver 17 for SQL Server")
 
-# 建立 SQLAlchemy 連線字串
-# 正確指定 ODBC 驅動程式
-DB_URI = f"mssql+pyodbc://{DB_USERNAME}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?driver=ODBC+Driver+17+for+SQL+Server"
+if DB_PORT:
+    DB_HOST = f"{DB_SERVER},{DB_PORT}"
+else:
+    DB_HOST = DB_SERVER  # 本機使用 instance name，不加 port
 
-# 初始化 SQLAlchemy
+DB_URI = (
+    f"mssql+pyodbc://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+    f"?driver={DB_DRIVER.replace(' ', '+')}&TrustServerCertificate=yes"
+)
+print(f"Connecting to database at {DB_URI}")
+
 db = SQLAlchemy()
-engine = create_engine(DB_URI, echo=True)  # echo=True 顯示執行的 SQL 查詢，方便除錯
+engine = create_engine(DB_URI)
+
+

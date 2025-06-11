@@ -6,7 +6,7 @@ from routes.HomePage import home_bp
 from routes.GoodPage import good_bp
 from routes.GoodDetail import goodDetail_bp
 from routes.ClientPage import clientPage_bp
-from dbconfig.dbconnect_backup import DB_URI, db
+from dbconfig.dbconnect import DB_URI, db
 import os
 from flask_cors import CORS
 

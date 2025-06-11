@@ -1,21 +1,12 @@
-# 5/24 開發日誌 by mie
-* suggest to put all validation func into *service\\*
-* *GoodDetail.py*
-    * 修改bp名稱(main也有一起改)
-    * 把 */track/id* 加回來
-* *clientPage.py*
-    * 完成API
-    * 有寫pytest & 手動測試(postman)
-* 測試相關
-> 我自己寫了一點簡單的測試，主要把200都測完，一小部分有測格式問題(沒有很多)
-> 測試是我先寫txt, 後面叫chatgpt幫我生pytest(我沒有特別檢查過pytest)
-```
-# 測試覆蓋率
-Name                     Stmts   Miss  Cover   Missing
-------------------------------------------------------
-routes\ClientPage.py       129     40    69%   34, 41, 54-59, 69, 82, 86-91, 98-101, 156, 168, 174, 176, 187-194, 206, 220-231
-```
+# 6/10 開發日誌
+* 試寫一份docker compose(但不適用於lambda + API gateway)
+* 沒有掛volume
+* 如有redis等服務，還需要再研究
 
+* Docker
+    * WSL: Debian 12
+    * ODBC 18
+    * MSSQL 2022
 # 專案規格
 ## Flask 後端專案
 
