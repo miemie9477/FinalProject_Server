@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 美妝比價平台 API
   description: 這是美妝比價平台的 API 文件
-  version: 1.6.0
+  version: 1.7.1
 servers:
   - url: http://localhost:5000/
 tags:
@@ -48,11 +48,11 @@ paths:
           description: "Invalid request parameter"
         "404":
           description: "find no result"
-  /homePage/product:
+  /homepage/product:
     get:
       tags:
         - HomePage
-      summary: 顯示 所有/特定類別 商品(order by clickTimes)
+      summary: (+cache)顯示 所有/特定類別 商品(order by clickTimes)
       parameters:
       - name: category
         in: query
@@ -72,11 +72,11 @@ paths:
           description: "Invalid request parameter"
         "404":
           description: "find no result"
-  /goodPage/product:
+  /goodpage/product:
     get:
       tags:
         - GoodPage
-      summary: 顯示 所有/特定類別 商品(order by clickTimes)
+      summary: (+cache)顯示 所有/特定類別 商品(order by clickTimes)
       parameters:
       - name: category
         in: query
@@ -96,11 +96,11 @@ paths:
           description: "Invalid request parameter"
         "404":
           description: "find no result"
-  /LoginPage/login:
+  /loginpage/login:
     post:
       tags:
         - LoginPage
-      summary: 表單驗證完登入
+      summary: (+token)表單驗證完登入
       description: 先做表單驗證，account password必填
       requestBody:
         description: 搜尋請求
@@ -116,7 +116,7 @@ paths:
           description: "Invalid request parameter"
         "404":
           description: "find no result"
-  /registerPage/register:
+  /registerpage/register:
     post:
       tags:
         - RegisterPage
@@ -156,7 +156,7 @@ paths:
         "404":
           description: "problem"
   
-  /goodDetail/product/{pId} :
+  /gooddetail/product/{pId} :
     get:
       tags:
         - GoodDetail
@@ -176,13 +176,42 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SearchResponse'
+                type: object
+                properties:
+                  results:
+                    type: object
+                    properties:
+                      pId:
+                        type: string
+                        maxLength: 8
+                        example: "a0000001"
+                      pName:
+                        type: string
+                        maxLength: 50
+                        example: "霓淨思超爆水面膜5片-潤澤保濕"
+                      brand:
+                        type: string
+                        maxLength: 30
+                        example: "霓淨思"
+                      category:
+                        type: string
+                        maxLength: 20
+                        example: "臉部保養"
+                      price:
+                        type: number
+                        example: 99.0
+                      clickTimes:
+                        type: integer
+                        example: 3
+                      review:
+                        type: number
+                        example: 4.5
         "400":
           description: "Invalid request parameter"
         "404":
           description: "find no result"
    
-  /goodDetail/priceNow/{pId}:
+  /gooddetail/priceNow/{pId}:
    get:
      tags:
       - GoodDetail
@@ -231,7 +260,7 @@ paths:
       "404":
         description: "find no result"
   
-  /goodDetail/productReview/{pId}:
+  /gooddetail/productReview/{pId}:
     get:
       tags:
         - GoodDetail
@@ -259,7 +288,7 @@ paths:
         "404":
           description: "找不到該商品的評價"
           
-  /goodDetail/click/{pId}:
+  /gooddetail/click/{pId}:
     post:
       tags:
         - GoodDetail
@@ -309,7 +338,7 @@ paths:
                     type: string
                     example: "無效的商品編號"
 
-  /goodDetail/track/id:
+  /gooddetail/track/id:
     post:
       tags:
         - GoodDetail
@@ -359,7 +388,7 @@ paths:
         "400":
           description: "請求錯誤"
 
-  /goodDetail/track:
+  /gooddetail/track:
     post:
       tags:
         - GoodDetail
@@ -440,7 +469,7 @@ paths:
                     example: "伺服器內部錯誤"
                     
 
-  /clientPage/track:
+  /clientpage/track:
     post:
       tags:
         - ClientPage
@@ -483,7 +512,7 @@ paths:
                   error:
                     type: string
                     example: "請先登入會員或已關注該商品"
-  /clientPage/trackList:
+  /clientpage/trackList:
     post:
       tags:
         - ClientPage
@@ -547,7 +576,7 @@ paths:
           description: "請求錯誤"
   
 
-  /clientPage/client:
+  /clientpage/client:
     post:
       tags:
         - ClientPage
@@ -578,7 +607,7 @@ paths:
         "404":
           description: "找不到會員"
   
-  /clientPage/data/update:
+  /clientpage/data/update:
     post:
       tags:
         - ClientPage
@@ -662,7 +691,7 @@ paths:
         "401":
           description: "未登入或權限不足"
           
-  /clientPage/password/update:
+  /clientpage/password/update:
     post:
       tags:
         - ClientPage
@@ -1098,9 +1127,12 @@ components:
     SearchRequest:
       type: object
       properties:
-        keyword:
+        pname:
           type: string
           example: "霓淨思面膜"
+        brand:
+          type: string
+          example: "霓淨"
           
     # pId pName brand category pPrice clickTimes review
     SearchResponse:
