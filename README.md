@@ -1,3 +1,6 @@
+## start redis
+`sudo systemctl start redis-server`
+
 ## 6/11更新日誌
 
 - Click times 儲存至redis(30分鐘一次回傳database)

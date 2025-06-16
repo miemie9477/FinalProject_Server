@@ -23,20 +23,67 @@ clientPage_bp = Blueprint("clientPage", __name__, url_prefix="/clientpage")
 #-------------------------------------#
 @clientPage_bp.route("/track", methods=["POST"])
 @token_required
-def clientpage_toggle_track():
-    # 因為 toggle_track_status 函式是從 GoodDetail 導入的，
-    # 如果它也需要 cId，並且期望 cId 在請求體中，您可能需要進行調整。
-    # 理想情況下，toggle_track_status 也應該能從 request.user 獲取 cId，或者您將 cId 傳遞給它。
-    # 這裡假設 toggle_track_status 內部會自行從 request 獲取或不需要 cId。
-    return toggle_track_status()
+def clientpage_toggle_track(current_user): # 確保函式接收 current_user 參數
+    """
+    切換商品的追蹤（收藏）狀態：如果已收藏則取消，如果未收藏則加入。
+    cId 從 Token 中獲取。
+    """
+    try:
+        cId = current_user['clientId'] # 從 Token 中獲取 cId
+        data = request.get_json()
+        pId = data.get('pId')
+
+        # 驗證 pId 是否齊全且為字串類型
+        if not pId or not isinstance(pId, str):
+            return jsonify({'error': '請求參數錯誤，缺少或無效的 pId'}), 400
+
+        # 使用 Composite Primary Key 查找收藏記錄
+        # db.session.get 適用於主鍵查詢，這裡假設 Client_Favorites 有複合主鍵 (cId, pId)
+        favorite = db.session.get(Client_Favorites, {'cId': cId, 'pId': pId})
+
+        if favorite:
+            # 如果已收藏，則取消追蹤
+            db.session.delete(favorite)
+            new_status = 0
+            message = "已取消追蹤"
+        else:
+            # 如果未收藏，則加入追蹤
+            # 首先檢查商品是否存在
+            product_exists = Product.query.filter_by(pId=pId).first()
+            if not product_exists:
+                return jsonify({'error': f'無法追蹤，商品 ID {pId} 不存在'}), 404
+            
+            # 商品存在，新增收藏記錄
+            add_favorite = Client_Favorites(cId=cId, pId=pId)
+            db.session.add(add_favorite)
+            new_status = 1
+            message = "已加入追蹤"
+        
+        db.session.commit() # 提交事務
+
+        return jsonify({
+            'message': message,
+            'cId': cId,
+            'pId': pId,
+            'status': new_status # 0 表示取消，1 表示加入
+        }), 200
+
+    except SQLAlchemyError as e:
+        db.session.rollback() # 確保在數據庫錯誤時回滾
+        print(f"SQLAlchemy 錯誤 (clientpage_toggle_track): {e}")
+        return jsonify({'error': f'資料庫操作錯誤: {str(e)}'}), 500
+    except Exception as e:
+        db.session.rollback() # 確保在任何意外錯誤發生時回滾
+        print(f"追蹤狀態切換時發生未預期錯誤 (clientpage_toggle_track): {e}")
+        return jsonify({'error': '伺服器內部錯誤'}), 500
 
 
 @clientPage_bp.route("/trackList", methods=["GET"]) # 建議改成 GET，因為是獲取列表
 @token_required # <-- 應用 token_required 裝飾器
-def get_track_list():
+def get_track_list(current_user):
     try:
         # 從 token_required 裝飾器附加的 request.user 中獲取 cId，更安全可靠
-        cId = request.user['clientId']
+        cId = current_user['clientId']
 
         # Select * from Client_Favorites WHERE cId = ?
         track = Client_Favorites.query.filter(Client_Favorites.cId == cId).all()
@@ -132,10 +179,10 @@ def is_duplicate_phone(db_session: Session, phone: str, exclude_id=None):
 
 @clientPage_bp.route("/data/update", methods=["POST"])
 @token_required # <-- 應用 token_required 裝飾器
-def update_client_data():
+def update_client_data(current_user):
     try:
         # 從 request.user 中獲取 cId，確保更新的是當前登入用戶的資料
-        cId = request.user['clientId']
+        cId = current_user['clientId']
 
         # 1. 檢查必要欄位
         data = request.get_json()
@@ -193,10 +240,10 @@ def update_client_data():
 
 @clientPage_bp.route("/password/update", methods=["POST"])
 @token_required # <-- 應用 token_required 裝飾器
-def password_update():
+def password_update(current_user):
     try:
         # 從 request.user 中獲取 cId，確保更新的是當前登入用戶的密碼
-        cId = request.user['clientId']
+        cId = current_user['clientId']
 
         data = request.get_json()
         new_password = data.get("password")
