@@ -20,11 +20,6 @@ def get_all_products():
     if cached_data:
         return jsonify(json.loads(cached_data)), 200
 
-
-    # 基本參數驗證：非字串型態
-    # if (category and not isinstance(category, str)):
-    #     return jsonify({"message": "Invalid request parameter"}), 400
-    
     # 防止無效排序欄位
     allowed_sort_fields = {"clickTimes", "price", "review"}
     if sort not in allowed_sort_fields:
@@ -60,6 +55,6 @@ def get_all_products():
         "clickTimes": product.clickTimes,
         "review": product.review
     } for product in products]
-    print(f"查詢結果數量: {len(results)}")
+    print(results)
     cache.set(cache_key, json.dumps(results), ex=43200)  # 設定快取，12小時後過期
     return jsonify({"results": results}), 200

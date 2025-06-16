@@ -103,7 +103,8 @@ def get_track_list(current_user):
                     "pName": product.pName,
                     "brand": product.brand,
                     "category": product.category,
-                    "price": float(product.price)
+                    "price": float(product.price),
+                    "review": product.review 
                     # 如果有圖片，也可以在這裡加入 imageUrl: product.imageUrl
                 })
         

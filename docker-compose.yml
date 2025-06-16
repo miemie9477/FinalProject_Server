@@ -13,7 +13,16 @@ services:
       - "1433:1433"
     networks:
       - backend
-
+  redis: # 新增 Redis 服務
+    image: redis:latest # 使用最新的 Redis 官方映像檔
+    container_name: my-redis-server # 給 Redis 容器一個名稱
+    restart: always # 確保 Redis 容器自動重啟
+    ports:
+      - "6379:6379" # 將主機的 6379 埠映射到容器的 6379 埠
+    volumes:
+      - redis_data:/data # 掛載具名卷以實現資料持久化
+    networks:
+      - backend # 將 Redis 服務也加入到 backend 網路
   flask_app:
     build: .
     container_name: flask_app
@@ -26,10 +35,19 @@ services:
       DB_USERNAME: sa
       DB_PASSWORD: Root_123456
       DB_NAME: DB
+      REDIS_HOST: redis # Redis 服務的名稱，作為 hostname
+      REDIS_PORT: 6379
+      REDIS_DB: 0 # 預設資料庫 0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_REFRESH_SECRET_KEY: ${JWT_REFRESH_SECRET_KEY}
     depends_on:
       - db
+      - redis
     networks:
       - backend
 
 networks:
   backend:
+
+volumes: # 定義具名卷，用於 Redis 資料持久化
+  redis_data:
