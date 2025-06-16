@@ -1,3 +1,30 @@
+## Docker 說明(6/17)
+* 環境簡介(推薦，當然也可以在wsl上安裝)
+    * 安裝 docker desktop
+    * WSL: Debian 12
+* docker compose 簡介
+    * 內容物: flask-app(backend), db, redis(目前沒有含前端)
+        > 想說等前端完全debug完再包
+    * SQL Server 2022
+    * ODBC 18
+    * Python 3.10
+* 使用手冊
+    * cd至serverclient
+    * 第一次執行`docker compose up --build`
+        > 第一次會跑比較久，大概要幾分鐘
+
+        > build只要第一次做就好
+    * 停止容器按control+C
+    * 移除容器，開另一個terminal，`cd serverclient`輸入`docker compose down`
+* **提醒**: 要使用docker命令要啟動docker desktop，沒有要使用建議關閉(建議左下角按Quit，不要按右上角叉叉)
+    > 因為我嚴重懷疑由於docker沒關導致我打LOL很卡 
+* 其他:
+    * Docker資料庫狀況?
+        > 可以去我github看init.sql，都只有我自己設的簡單假資料
+    * Docker可以幹嘛?
+        > 前端串API不用搞環境，大概就 醬，目前
+    * 本次新增: redis
+
 ## start redis
 `sudo systemctl start redis-server`
 
